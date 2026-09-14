@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raymond Sheng</title>
+<meta name="description" content="Raymond Sheng, electrical and computer engineering student at Cornell.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400&family=Inter:wght@300;400;500&family=Space+Mono:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4ef;
+    --text: #1a1a1a;
+    --muted: #666666;
+    --line: #e0dfd9;
+    --accent: #3a5cda;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: transparent; 
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  ::selection { background: var(--text); color: var(--bg); }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: opacity 0.2s ease; }
+  a:hover { opacity: 0.5; }
+  
+  .serif { font-family: 'Cormorant Garamond', serif; }
+  .mono { font-family: 'Space Mono', monospace; }
+  .italic { font-style: italic; }
+  
+  /* ---- Dynamic Background (Zero-Blur GPU Optimized) ---- */
+  .base-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg);
+    z-index: -2;
+  }
+  
+  .bg-blobs {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.45; /* Softens the overall glow */
+    transition: background-color 2s ease;
+    will-change: transform, background-color;
+    
+    /* The Magic: Replaces CPU-heavy blur with a GPU-friendly radial gradient mask */
+    -webkit-mask-image: radial-gradient(closest-side, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    mask-image: radial-gradient(closest-side, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+  }
+  
+  /* Increased sizes slightly because the mask fades out at the edges */
+  .blob-1 { width: 70vw; height: 70vw; top: -20%; left: -15%; background-color: #c0c5ea; }
+  .blob-2 { width: 60vw; height: 60vw; top: 30%; right: -10%; background-color: #e6c3c3; }
+  .blob-3 { width: 80vw; height: 80vw; bottom: -30%; left: 10%; background-color: #c4d4c5; }
+  
+  @media (max-width: 900px) {
+    .blob { width: 120vw; height: 120vw; }
+  }
+
+  /* ---- Top Bar ---- */
+  .top-bar {
+    position: absolute;
+    top: 40px;
+    left: 5%;
+    right: 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+  }
+  
+  .top-bar > div { flex: 1; }
+  
+  .top-bar .status {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  
+  .top-bar .status a {
+    color: var(--text);
+    border-bottom: 1px solid var(--text);
+    padding-bottom: 2px;
+  }
+  
+  .top-bar .copyright {
+    text-align: right;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  
+  /* ---- Hero ---- */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 5%;
+    position: relative;
+  }
+  
+  .hero-name {
+    font-size: clamp(48px, 10vw, 150px);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    text-align: center;
+    margin: 0 auto;
+    position: relative;
+    padding: 40px 0;
+  }
+  
+  .hero-bottom {
+    position: absolute;
+    bottom: 40px;
+    left: 5%;
+    right: 5%;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  
+  /* ---- Projects ---- */
+  .projects {
+    padding: 120px 5%;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 80px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  
+  .project-row {
+    display: flex;
+    align-items: center;
+    gap: 8vw;
+    margin-bottom: 160px;
+  }
+  
+  .project-row:nth-child(even) {
+    flex-direction: row-reverse;
+  }
+  
+  @media (max-width: 900px) {
+    .project-row, .project-row:nth-child(even) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 40px;
+      margin-bottom: 100px;
+    }
+    .top-bar { flex-direction: column; gap: 16px; }
+    .top-bar .copyright { text-align: center; }
+  }
+  
+  .proj-img {
+    flex: 1;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #e6e5df;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.05); 
+  }
+  
+  .proj-info {
+    flex: 1;
+    max-width: 500px;
+  }
+  
+  .proj-num {
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: block;
+  }
+  
+  .proj-info h3 {
+    font-size: clamp(32px, 4vw, 44px);
+    font-weight: 500;
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  
+  .proj-info p {
+    font-size: 17px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+  
+  .proj-meta {
+    font-size: 11px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .proj-meta span { color: var(--line); margin: 0 8px; opacity: 0.5; }
+  
+  /* ---- Marquee ---- */
+  .marquee-wrapper {
+    overflow: hidden;
+    padding: 60px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: rgba(235, 234, 228, 0.4);
+  }
+  
+  .marquee {
+    display: flex;
+    white-space: nowrap;
+    animation: scroll 25s linear infinite;
+    font-size: 13px;
+  }
+  
+  .marquee span { padding: 0 40px; }
+  
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  
+  /* ---- Experience ---- */
+  .experience {
+    padding: 120px 5%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .experience-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 80px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  
+  .exp-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    align-items: center;
+    font-weight: 400;
+  }
+  
+  @media (max-width: 700px) {
+    .exp-row { grid-template-columns: 1fr; gap: 8px; padding: 20px 0; }
+    .exp-row .date { text-align: left; }
+  }
+  
+  .exp-row .company { font-weight: 500; color: var(--text); }
+  .exp-row .role { color: var(--muted); }
+  .exp-row .date { text-align: right; font-size: 13px; color: var(--muted); }
+  
+  /* ---- Footer ---- */
+  .footer {
+    padding: 120px 5% 60px;
+    text-align: center;
+  }
+  
+  .footer-say-hello {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+    font-weight: 500;
+  }
+  
+  .footer-cta {
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 500;
+    margin-bottom: 60px;
+  }
+  
+  .footer-cta span { color: var(--accent); }
+  
+  .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 80px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .footer-info {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-weight: 300;
+  }
+  
+  .giant-name {
+    font-size: clamp(48px, 11vw, 180px);
+    font-weight: 500;
+    line-height: 0.8;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  
+  .sub-footer {
+    margin-top: 60px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <!-- FIXED BACKGROUND LAYER -->
+  <div class="base-bg"></div>
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero" id="hero-section">
+    <div class="top-bar">
+      <div></div>
+      <div class="status mono">ece junior @ cornell · systems eng intern @ <a href="https://www.ga.com/" target="_blank" rel="noopener">general atomics</a></div>
+      <div class="copyright serif italic">©2026</div>
+    </div>
+    
+    <h1 class="hero-name serif italic">Raymond Sheng</h1>
+    
+    <div class="hero-bottom mono">
+      <span>cornell physical intelligence / cornell hyperloop</span>
+      <span>
+        <a href="#projects" data-lenis-link>projects ↓</a> &nbsp;&nbsp;&nbsp; 
+        <a href="/resume">résumé ↗</a>
+      </span>
+    </div>
+  </header>
+
+  <!-- PROJECTS -->
+  <section class="projects" id="projects-section">
+    <div class="section-label">Projects</div>
+
+    <!-- Project 01 -->
+    <div class="project-row">
+      <div class="proj-img"></div>
+      <div class="proj-info">
+        <span class="proj-num mono">01</span>
+        <h3 class="serif italic">Emergency Power Off Board</h3>
+        <p>Safety-critical relay cutoff PCB designed and validated in SPICE to cleanly de-energize Cornell Hyperloop's pod.</p>
+        <div class="proj-meta mono">2026 <span>/</span> Hardware <span>/</span> KiCAD <span>/</span> SPICE</div>
+      </div>
+    </div>
+
+    <!-- Project 02 -->
+    <div class="project-row">
+      <div class="proj-img"></div>
+      <div class="proj-info">
+        <span class="proj-num mono">02</span>
+        <h3 class="serif italic">Wireless Charging System</h3>
+        <p>Inductive transmit and receive coils enabling a hexapod robot to wirelessly charge a drone mid-mission.</p>
+        <div class="proj-meta mono">2026 <span>/</span> RF Design <span>/</span> Altium</div>
+      </div>
+    </div>
+
+    <!-- Project 03 -->
+    <div class="project-row">
+      <div class="proj-img"></div>
+      <div class="proj-info">
+        <span class="proj-num mono">03</span>
+        <h3 class="serif italic">Buck Converter & LDO</h3>
+        <p>Power regulation characterization board featuring separately testable async buck and linear stages.</p>
+        <div class="proj-meta mono">2025 <span>/</span> Power Electronics <span>/</span> Altium</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS MARQUEE -->
+  <div class="marquee-wrapper">
+    <div class="marquee mono">
+      <span>ALTIUM</span><span>/</span>
+      <span>KICAD</span><span>/</span>
+      <span>SPICE</span><span>/</span>
+      <span>EMBEDDED C</span><span>/</span>
+      <span>PYTHON</span><span>/</span>
+      <span>ESP32</span><span>/</span>
+      <span>SYSTEMS INTEGRATION</span><span>/</span>
+      <span>RF DESIGN</span><span>/</span>
+      <span>ALTIUM</span><span>/</span>
+      <span>KICAD</span><span>/</span>
+      <span>SPICE</span><span>/</span>
+      <span>EMBEDDED C</span><span>/</span>
+      <span>PYTHON</span><span>/</span>
+      <span>ESP32</span><span>/</span>
+      <span>SYSTEMS INTEGRATION</span><span>/</span>
+      <span>RF DESIGN</span><span>/</span>
+    </div>
+  </div>
+
+  <!-- EXPERIENCE -->
+  <section class="experience" id="experience-section">
+    <div class="experience-label">Experience</div>
+    
+    <div class="exp-row">
+      <div class="company">General Atomics</div>
+      <div class="role">Systems Eng. Intern</div>
+      <div class="date mono">May 2026 — Aug 2026</div>
+    </div>
+    <div class="exp-row">
+      <div class="company">Cornell Physical Intelligence</div>
+      <div class="role">Wireless Power</div>
+      <div class="date mono">Jan 2026 — Present</div>
+    </div>
+    <div class="exp-row">
+      <div class="company">Cornell Hyperloop</div>
+      <div class="role">Power Systems</div>
+      <div class="date mono">Aug 2025 — Present</div>
+    </div>
+    <div class="exp-row">
+      <div class="company">Impinj</div>
+      <div class="role">RFID Research Intern</div>
+      <div class="date mono">May 2024 — Aug 2024</div>
+    </div>
+    <div class="exp-row">
+      <div class="company">Wang Labs, SDSU</div>
+      <div class="role">Research Lead</div>
+      <div class="date mono">Aug 2021 — Dec 2023</div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer" id="footer-section">
+    <div class="footer-say-hello">Connect</div>
+    <h2 class="footer-cta serif italic">Let's engineer the <span>future.</span></h2>
+    
+    <div class="footer-links">
+      <a href="mailto:raymondshengofficial@gmail.com">Email</a>
+      <a href="https://www.linkedin.com/in/raymond-y-sheng/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="/resume">Résumé</a>
+    </div>
+    
+    <div class="footer-info">
+      <div>San Diego, CA ➔ Ithaca, NY</div>
+      <div>Interests: Tottenham Hotspur, Keshi, Badminton</div>
+    </div>
+    
+    <div class="giant-name serif italic">Raymond Sheng</div>
+    
+    <div class="sub-footer">
+      <span>© 2026 — Designed & Built by Raymond Sheng</span>
+      <span>All Rights Reserved</span>
+    </div>
+  </footer>
+
+  <!-- Lenis Smooth Scrolling & Background Logic -->
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script>
+    // Initialize Lenis
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smooth: true,
+    });
+
+    const blob1 = document.querySelector('.blob-1');
+    const blob2 = document.querySelector('.blob-2');
+    const blob3 = document.querySelector('.blob-3');
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    // Ensure we avoid dividing by zero if layout hasn't computed yet
+    lenis.on('scroll', (e) => {
+      const p = e.limit > 0 ? e.scroll / e.limit : 0;
+      
+      blob1.style.transform = `translate3d(${p * 20}vw, ${p * 35}vh, 0)`;
+      blob2.style.transform = `translate3d(${-p * 15}vw, ${-p * 25}vh, 0)`;
+      blob3.style.transform = `translate3d(${p * 10}vw, ${-p * 45}vh, 0)`;
+    });
+
+    const colorSets = {
+      'hero-section':       ['#c0c5ea', '#e6c3c3', '#c4d4c5'], 
+      'projects-section':   ['#e3d3b6', '#c0c5ea', '#e6c3c3'], 
+      'experience-section': ['#c4d4c5', '#e3d3b6', '#b6cbe6'], 
+      'footer-section':     ['#b6cbe6', '#c4d4c5', '#e3d3b6']  
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          if (colorSets[id]) {
+            blob1.style.backgroundColor = colorSets[id][0];
+            blob2.style.backgroundColor = colorSets[id][1];
+            blob3.style.backgroundColor = colorSets[id][2];
+          }
+        }
+      });
+    }, { threshold: 0.35 });
+
+    ['hero-section', 'projects-section', 'experience-section', 'footer-section'].forEach(id => {
+      observer.observe(document.getElementById(id));
+    });
+
+    document.querySelectorAll('a[data-lenis-link]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').replace('#', '');
+        const targetElement = document.getElementById(targetId + '-section');
+        if (targetElement) {
+          lenis.scrollTo(targetElement);
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé — Raymond Sheng</title>
+<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+<link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap)" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --text: #111111;
+    --muted: #555555;
+    --line: #d8d7d2;
+    --sidebar-w: 60px;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden; /* Prevents double scrolling with iframe */
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  a { color: inherit; text-decoration: none; }
+  
+  /* ---- Sidebar (Matches Main Site) ---- */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--sidebar-w);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 0;
+    z-index: 100;
+    background: var(--bg);
+  }
+  
+  .sidebar-text {
+    writing-mode: vertical-rl;
+    transform: scale(-1);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  
+  .sidebar .name { color: var(--text); font-weight: 500; }
+  
+  /* ---- Main Content for Resume ---- */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 5%;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .nav a { transition: opacity 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
+  .nav a:hover { opacity: 0.5; }
+  
+  .pdf-viewer {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #e4e3de; /* Placeholder color while PDF loads */
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <span class="sidebar-text">FOLIO — EDITION</span>
+  <span class="sidebar-text name">RAYMOND SHENG</span>
+  <span class="sidebar-text">© 2026</span>
+</div>
+
+<div class="main-content">
+  <nav class="nav">
+    <a href="/"><span>←</span> Back to Portfolio</a>
+    <a href="/Resume_RaymondSheng.pdf" download>Download PDF</a>
+  </nav>
+
+  <!-- Make sure this src points to where your PDF actually lives on the server -->
+  <iframe class="pdf-viewer" src="/Resume_RaymondSheng.pdf#toolbar=0&navpanes=0&scrollbar=0" title="Raymond Sheng Resume">
+    <p>Your browser does not support PDFs. <a href="/Resume_RaymondSheng.pdf">Download the PDF</a>.</p>
+  </iframe>
+</div>
+
+</body>
+</html>
