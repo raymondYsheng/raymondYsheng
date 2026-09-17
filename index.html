@@ -188,6 +188,58 @@
     overflow: hidden;
     border: 1px solid rgba(0,0,0,0.05); 
   }
+
+  .proj-img img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    padding: 4%;
+  }
+
+  .proj-img img.active { opacity: 1; }
+
+  .proj-img img[data-view="schematic"] {
+    background: #fafaf7;
+    padding: 6%;
+  }
+
+  .img-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    gap: 6px;
+    background: rgba(245, 244, 239, 0.85);
+    backdrop-filter: blur(6px);
+    border-radius: 20px;
+    padding: 4px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .img-toggle button {
+    border: none;
+    background: transparent;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .img-toggle button.active {
+    background: var(--text);
+    color: var(--bg);
+  }
   
   .proj-info {
     flex: 1;
@@ -364,10 +416,10 @@
     <h1 class="hero-name serif italic">Raymond Sheng</h1>
     
     <div class="hero-bottom mono">
-      <span>cornell physical intelligence / cornell hyperloop / cornell kappa theta pi</span>
+      <span>cornell physical intelligence / cornell hyperloop</span>
       <span>
         <a href="#projects" data-lenis-link>projects ↓</a> &nbsp;&nbsp;&nbsp; 
-        <a href="/resume">résumé ↗</a>
+        <a href="resume.html">résumé ↗</a>
       </span>
     </div>
   </header>
@@ -378,7 +430,14 @@
 
     <!-- Project 01 -->
     <div class="project-row">
-      <div class="proj-img"></div>
+      <div class="proj-img" data-project="epo">
+        <img data-view="pcb" class="active" src="images/epo_pcb.png" alt="Emergency Power Off Board, 3D render">
+        <img data-view="schematic" src="images/epo_sch.svg" alt="Emergency Power Off Board schematic">
+        <div class="img-toggle">
+          <button data-view="pcb" class="active">PCB</button>
+          <button data-view="schematic">Schematic</button>
+        </div>
+      </div>
       <div class="proj-info">
         <span class="proj-num mono">01</span>
         <h3 class="serif italic">Emergency Power Off Board</h3>
@@ -400,7 +459,14 @@
 
     <!-- Project 03 -->
     <div class="project-row">
-      <div class="proj-img"></div>
+      <div class="proj-img" data-project="buck">
+        <img data-view="pcb" class="active" src="images/buck_pcb.png" alt="Buck Converter & LDO Board layout">
+        <img data-view="schematic" src="images/buck_sch.svg" alt="Buck Converter & LDO schematic">
+        <div class="img-toggle">
+          <button data-view="pcb" class="active">PCB</button>
+          <button data-view="schematic">Schematic</button>
+        </div>
+      </div>
       <div class="proj-info">
         <span class="proj-num mono">03</span>
         <h3 class="serif italic">Buck Converter & LDO</h3>
@@ -471,7 +537,7 @@
     <div class="footer-links">
       <a href="mailto:raymondshengofficial@gmail.com">Email</a>
       <a href="https://www.linkedin.com/in/raymond-y-sheng/" target="_blank" rel="noopener">LinkedIn</a>
-      <a href="/resume">Résumé</a>
+      <a href="resume.html">Résumé</a>
     </div>
     
     <div class="footer-info">
@@ -538,6 +604,17 @@
 
     ['hero-section', 'projects-section', 'experience-section', 'footer-section'].forEach(id => {
       observer.observe(document.getElementById(id));
+    });
+
+    // Project image toggle (PCB / Schematic)
+    document.querySelectorAll('.proj-img').forEach(box => {
+      box.querySelectorAll('.img-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const view = btn.getAttribute('data-view');
+          box.querySelectorAll('.img-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+          box.querySelectorAll('img').forEach(img => img.classList.toggle('active', img.getAttribute('data-view') === view));
+        });
+      });
     });
 
     document.querySelectorAll('a[data-lenis-link]').forEach(anchor => {
