@@ -513,7 +513,8 @@
     margin-bottom: 40px;
   }
 
-  .modal-meta span { color: var(--line); margin: 0 8px; opacity: 0.5; }
+  .modal-meta .meta-part { color: var(--text); }
+  .modal-meta > span:not(.meta-part) { color: var(--line); margin: 0 8px; opacity: 0.5; }
 
   .modal-img {
     width: 100%;
@@ -561,8 +562,8 @@
 
   .modal-body p {
     font-size: 17px;
-    color: var(--muted);
-    font-weight: 300;
+    color: var(--text);
+    font-weight: 400;
     margin-bottom: 20px;
     max-width: 640px;
   }
@@ -584,8 +585,8 @@
 
   .modal-body ul li {
     font-size: 15px;
-    color: var(--muted);
-    font-weight: 300;
+    color: var(--text);
+    font-weight: 400;
     padding-left: 18px;
     position: relative;
     max-width: 640px;
@@ -599,9 +600,36 @@
   }
 
   body.modal-open { overflow: hidden; }
+
+  /* ---- CPU project: inline live datapath diagram ---- */
+  .cpu-viz { width: 100%; }
+  .cpu-viz.thumb { height: 100%; display: flex; align-items: center; justify-content: center; padding: 10%; background: #fff; }
+  .cpu-viz svg { display: block; width: 100%; height: auto; }
+  .cpu-viz .node rect { fill: #fff; stroke: var(--line); stroke-width: 1.2; transition: stroke .3s, filter .3s; }
+  .cpu-viz.thumb .node rect { fill: #f3f2ec; }
+  .cpu-viz .node text { font-family: 'Inter', sans-serif; fill: var(--text); }
+  .cpu-viz .node .lbl { font-size: 9px; letter-spacing: .05em; fill: var(--muted); text-transform: uppercase; }
+  .cpu-viz .node .val { font-size: 13px; font-weight: 500; }
+  .cpu-viz .node.active rect { stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 3px 10px rgba(58,92,218,.25)); }
+  .cpu-viz .wire { stroke: var(--line); stroke-width: 1.4; fill: none; }
+  .cpu-viz .pulse { fill: var(--accent); opacity: 0; }
+  .cpu-viz .caption { text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; min-height: 28px; margin: 16px 0 18px; }
+  .cpu-viz .regs { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .cpu-viz .reg { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 8px 16px; text-align: center; transition: border-color .3s, box-shadow .3s; }
+  .cpu-viz .reg.hot { border-color: var(--accent); box-shadow: 0 3px 10px rgba(58,92,218,.18); }
+  .cpu-viz .reg .rn { font-size: 9px; color: var(--muted); letter-spacing: .06em; }
+  .cpu-viz .reg .rv { font-size: 17px; font-family: 'Cormorant Garamond', serif; font-weight: 500; }
+  .cpu-viz .controls { display: flex; justify-content: center; gap: 8px; }
+  .cpu-viz .controls button {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: .03em; text-transform: uppercase;
+    background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 6px 14px;
+    border-radius: 20px; cursor: pointer; transition: .2s;
+  }
+  .cpu-viz .controls button:hover, .cpu-viz .controls button.on { color: var(--text); border-color: var(--text); }
 </style>
 </head>
 <body>
+
 
   <!-- FIXED BACKGROUND LAYER -->
   <div class="base-bg"></div>
@@ -655,7 +683,7 @@
 
     <!-- Project 02 -->
     <div class="project-row" data-project="cpu" tabindex="0" role="button" aria-label="View 8-bit CPU in Verilog details">
-      <div class="proj-img"></div>
+      <div class="proj-img" id="cpu-thumb"></div>
       <div class="proj-info">
         <span class="proj-num mono">02</span>
         <h3 class="serif italic">8-bit CPU in Verilog</h3>
@@ -827,6 +855,153 @@
       observer.observe(document.getElementById(id));
     });
 
+    // ---- CPU project: inline live datapath diagram ----
+    // Faithful to the real ISA: opcode = instr[7:5], rd = instr[4:3], rs = instr[2:1], addr = instr[2:0]
+    const CPU_PROG = [0x80,0x89,0x02,0xA2,0xE4,0x00,0x00,0x00]; // LOAD r0,0 / LOAD r1,1 / ADD r0,r0,r1 / STORE r0,2 / JUMP 4
+    const CPU_OPN = ['ADD','SUB','AND','OR','LOAD','STORE','BEQ','JUMP'];
+    let cpuModalStop = null;
+
+    function cpuVizMarkup(compact) {
+      const cls = compact ? 'cpu-viz thumb' : 'cpu-viz';
+      return `<div class="${cls}">
+        <svg viewBox="0 0 720 190">
+          <path class="wire" d="M95,95 H185"/>
+          <path class="wire" d="M275,95 H365"/>
+          <path class="wire" d="M455,70 Q500,70 500,95 Q500,120 545,120"/>
+          <path class="wire" d="M455,120 H545"/>
+          <path class="wire" d="M635,95 Q670,95 670,60 Q670,20 500,20 Q330,20 275,20 Q95,20 95,70"/>
+          <circle class="pulse" data-p="1" r="4"/><circle class="pulse" data-p="2" r="4"/>
+          <circle class="pulse" data-p="3" r="4"/><circle class="pulse" data-p="4" r="4"/>
+          <g class="node" data-n="imem" transform="translate(5,65)"><rect width="90" height="60" rx="6"/>
+            <text class="lbl" x="45" y="20" text-anchor="middle">fetch</text>
+            <text class="val" data-v="imem" x="45" y="42" text-anchor="middle">--</text></g>
+          <g class="node" data-n="rf" transform="translate(185,65)"><rect width="90" height="60" rx="6"/>
+            <text class="lbl" x="45" y="20" text-anchor="middle">registers</text>
+            <text class="val" data-v="rf" x="45" y="42" text-anchor="middle">--</text></g>
+          <g class="node" data-n="alu" transform="translate(365,40)"><rect width="90" height="60" rx="6"/>
+            <text class="lbl" x="45" y="20" text-anchor="middle">alu</text>
+            <text class="val" data-v="alu" x="45" y="42" text-anchor="middle">--</text></g>
+          <g class="node" data-n="dmem" transform="translate(545,90)"><rect width="90" height="60" rx="6"/>
+            <text class="lbl" x="45" y="20" text-anchor="middle">memory</text>
+            <text class="val" data-v="dmem" x="45" y="42" text-anchor="middle">--</text></g>
+        </svg>
+        ${compact ? '' : `
+        <div class="caption" data-caption>—</div>
+        <div class="regs" data-regs></div>
+        <div class="controls">
+          <button data-toggle class="on">Pause</button>
+          <button data-restart>Restart</button>
+        </div>`}
+      </div>`;
+    }
+
+    function cpuDecode(instr) {
+      const opcode=(instr>>5)&7, rd=(instr>>3)&3, rs=(instr>>1)&3, addr=instr&7;
+      return { opcode, rd, rs, addr, rtype: opcode<=3,
+        reg_write: opcode<=4, mem_read: opcode===4, mem_write: opcode===5,
+        branch: opcode===6, jump: opcode===7, mem_to_reg: opcode===4 };
+    }
+    function cpuCaption(d) {
+      if (d.rtype) return `computing r${d.rd} = r${d.rd} ${{0:'+',1:'\u2212',2:'AND',3:'OR'}[d.opcode]} r${d.rs}`;
+      if (d.opcode===4) return `loading memory[${d.addr}] into r${d.rd}`;
+      if (d.opcode===5) return `storing r${d.rd} into memory[${d.addr}]`;
+      if (d.opcode===6) return `checking r${d.rd} \u2014 branch to ${d.addr} if zero`;
+      return `jumping to instruction ${d.addr}`;
+    }
+
+    function stopCpuViz() { if (cpuModalStop) { cpuModalStop.stop(); cpuModalStop = null; } }
+
+    function mountCpuViz(container, compact) {
+      const el = container.querySelector('.cpu-viz');
+      if (!el) return;
+      let regs = [0,0,0,0], dmem = [5,7,0,0,0,0,0,0], pc = 0, playing = true, timer = null;
+
+      // Cache every node we touch each step instead of re-querying the DOM.
+      const nodes = {};
+      ['imem','rf','alu','dmem'].forEach(n => nodes[n] = el.querySelector(`[data-n="${n}"]`));
+      const vals = {};
+      ['imem','rf','alu','dmem'].forEach(n => vals[n] = el.querySelector(`[data-v="${n}"]`));
+      const pulses = {};
+      [1,2,3,4].forEach(n => pulses[n] = el.querySelector(`.pulse[data-p="${n}"]`));
+      const capEl = el.querySelector('[data-caption]');
+
+      const regsEl = el.querySelector('[data-regs]');
+      function renderRegs() {
+        if (!regsEl) return;
+        regsEl.innerHTML = regs.map((v,i) => `<div class="reg" data-reg="${i}"><div class="rn">r${i}</div><div class="rv">${v}</div></div>`).join('');
+      }
+      function pulse(n, x1,y1,x2,y2,dur) {
+        const dot = pulses[n];
+        dot.style.opacity = 1;
+        dot.animate([{transform:`translate(${x1}px,${y1}px)`},{transform:`translate(${x2}px,${y2}px)`}], {duration:dur, easing:'ease-in-out'});
+        setTimeout(() => dot.style.opacity = 0, dur);
+      }
+      function step() {
+        const d = cpuDecode(CPU_PROG[pc]);
+        const rdData = regs[d.rd], rsData = regs[d.rs];
+        let alu = 0;
+        if (d.rtype) alu = d.opcode===0 ? (rdData+rsData)&0xFF : d.opcode===1 ? (rdData-rsData)&0xFF : d.opcode===2 ? (rdData&rsData) : (rdData|rsData);
+        const memR = dmem[d.addr];
+        const writeData = d.mem_to_reg ? memR : alu;
+        if (d.mem_write) dmem[d.addr] = rdData;
+        if (d.reg_write) regs[d.rd] = writeData;
+        const taken = d.branch && rdData === 0;
+        pc = d.jump ? d.addr : taken ? d.addr : (pc+1)&7;
+
+        const setv = (k,v) => { if (vals[k]) vals[k].textContent = v; };
+        setv('imem', CPU_OPN[d.opcode]);
+        setv('rf', `r${d.rd}${d.rtype ? `, r${d.rs}` : ''}`);
+        setv('alu', d.rtype ? alu : '\u2014');
+        setv('dmem', (d.mem_read||d.mem_write) ? `[${d.addr}]` : '\u2014');
+        if (capEl) capEl.textContent = cpuCaption(d);
+
+        nodes.imem.classList.add('active');
+        nodes.rf.classList.add('active');
+        nodes.alu.classList.toggle('active', d.rtype);
+        nodes.dmem.classList.toggle('active', d.mem_read||d.mem_write);
+        setTimeout(() => { nodes.imem.classList.remove('active'); nodes.rf.classList.remove('active'); nodes.alu.classList.remove('active'); nodes.dmem.classList.remove('active'); }, 900);
+
+        pulse(1,5,95,185,95,500);
+        if (d.rtype) pulse(2,275,95,365,70,500);
+        if (d.mem_read||d.mem_write) pulse(3,455,95,545,120,500);
+        if (d.reg_write) pulse(4,635,95,95,95,700);
+
+        renderRegs();
+        if (d.reg_write && regsEl) {
+          const r = el.querySelector(`[data-reg="${d.rd}"]`);
+          if (r) { r.classList.add('hot'); setTimeout(() => r.classList.remove('hot'), 900); }
+        }
+      }
+      function loop() { step(); timer = setTimeout(loop, compact ? 1600 : 1400); }
+      function stop() { if (timer) { clearTimeout(timer); timer = null; } }
+
+      renderRegs();
+      const toggleBtn = el.querySelector('[data-toggle]');
+      const restartBtn = el.querySelector('[data-restart]');
+      if (toggleBtn) toggleBtn.addEventListener('click', () => {
+        playing = !playing;
+        toggleBtn.textContent = playing ? 'Pause' : 'Play';
+        toggleBtn.classList.toggle('on', playing);
+        if (playing) loop(); else stop();
+      });
+      if (restartBtn) restartBtn.addEventListener('click', () => {
+        stop();
+        regs = [0,0,0,0]; dmem = [5,7,0,0,0,0,0,0]; pc = 0;
+        renderRegs();
+        if (playing) loop();
+      });
+      loop();
+      return { stop, start: () => { if (!timer) { playing = true; if (toggleBtn) { toggleBtn.textContent = 'Pause'; toggleBtn.classList.add('on'); } loop(); } } };
+    }
+
+    // Auto-mount the small always-on preview in the project card, paused while any modal is open
+    const cpuThumbEl = document.getElementById('cpu-thumb');
+    let cpuThumbCtl = null;
+    if (cpuThumbEl) {
+      cpuThumbEl.innerHTML = cpuVizMarkup(true);
+      cpuThumbCtl = mountCpuViz(cpuThumbEl, true);
+    }
+
     // Project image toggle (PCB / Schematic)
     document.querySelectorAll('.proj-img').forEach(box => {
       box.querySelectorAll('.img-toggle button').forEach(btn => {
@@ -873,7 +1048,7 @@
         title: '8-bit CPU in Verilog',
         meta: ['2026', 'Digital Design', 'Verilog', 'Icarus Verilog'],
         images: [],
-        placeholderText: 'Simulated in Icarus Verilog — no PCB',
+        liveViz: true,
         overview: [
           "A single-cycle 8-bit CPU designed and built from scratch in Verilog to learn CPU architecture hands-on, with every module verified in simulation. The ISA packs a 3-bit opcode, 4 registers, and an 8-word instruction/data memory into an 8-bit instruction word, using a 2-operand form (rd = rd op rs) so everything fits — ADD/SUB/AND/OR opcodes even double directly as the ALU's function-select bits.",
           "Built up module by module — register file, ALU, instruction/data memory, control unit, then the full CPU datapath — each verified in Icarus Verilog before moving to the next, culminating in an integration testbench that runs a 5-instruction program computing 5 + 7 = 12. A companion interactive HTML workbook mirrors the build order with hinted exercises, two auto-graded challenges, and a JavaScript reference simulator for testing programs without a local toolchain."
@@ -918,13 +1093,20 @@
       const data = projectDetails[id];
       if (!data) return;
 
+      if (cpuThumbCtl) cpuThumbCtl.stop();
+
       modalNum.textContent = data.num;
       modalTitle.textContent = data.title;
       modalMeta.innerHTML = buildMeta(data.meta);
 
-      // Images
+      // Images / live diagram
       modalImg.innerHTML = '';
-      if (data.images && data.images.length) {
+      stopCpuViz();
+      if (data.liveViz) {
+        modalImg.classList.remove('no-image');
+        modalImg.innerHTML = cpuVizMarkup(false);
+        cpuModalStop = mountCpuViz(modalImg, false);
+      } else if (data.images && data.images.length) {
         modalImg.classList.remove('no-image');
         data.images.forEach((img, i) => {
           const el = document.createElement('img');
@@ -986,6 +1168,8 @@
     function closeProjectModal() {
       modalOverlay.classList.remove('open');
       document.body.classList.remove('modal-open');
+      stopCpuViz();
+      if (cpuThumbCtl) cpuThumbCtl.start();
       lenis.start();
     }
 
