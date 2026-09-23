@@ -56,18 +56,29 @@
     position: absolute;
     border-radius: 50%;
     opacity: 0.45; /* Softens the overall glow */
-    transition: background-color 2s ease;
-    will-change: transform, background-color;
-    
-    /* The Magic: Replaces CPU-heavy blur with a GPU-friendly radial gradient mask */
-    -webkit-mask-image: radial-gradient(closest-side, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
-    mask-image: radial-gradient(closest-side, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    will-change: transform;
   }
-  
+
+  /* Two stacked color layers per blob, crossfaded via opacity instead of animating
+     background-color directly (which would repaint the whole layer every frame of the
+     transition). Each layer paints its own soft falloff via radial-gradient rather than
+     a solid color + CSS mask-image on the parent — mask-image is poorly accelerated on
+     some browsers/GPUs at this element size (up to 80vw), and was the main source of the
+     scroll/animation jank. A radial-gradient background achieves the same soft-edged
+     "glow" look with a plain, well-optimized paint path. */
+  .blob-color {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    will-change: opacity;
+  }
+  .blob-color.front { opacity: 1; }
+
   /* Increased sizes slightly because the mask fades out at the edges */
-  .blob-1 { width: 70vw; height: 70vw; top: -20%; left: -15%; background-color: #c0c5ea; }
-  .blob-2 { width: 60vw; height: 60vw; top: 30%; right: -10%; background-color: #e6c3c3; }
-  .blob-3 { width: 80vw; height: 80vw; bottom: -30%; left: 10%; background-color: #c4d4c5; }
+  .blob-1 { width: 70vw; height: 70vw; top: -20%; left: -15%; }
+  .blob-2 { width: 60vw; height: 60vw; top: 30%; right: -10%; }
+  .blob-3 { width: 80vw; height: 80vw; bottom: -30%; left: 10%; }
   
   @media (max-width: 900px) {
     .blob { width: 120vw; height: 120vw; }
@@ -318,6 +329,7 @@
     white-space: nowrap;
     animation: scroll 25s linear infinite;
     font-size: 13px;
+    will-change: transform;
   }
   
   .marquee span { padding: 0 40px; }
@@ -429,9 +441,9 @@
     inset: 0;
     z-index: 100;
     background: rgba(26, 26, 26, 0.35);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    display: flex;
+    /* No backdrop-filter here — see .modal-overlay.blurred below. Blur is expensive to
+       recompute every frame, so it must never be present while opacity is transitioning. */
+    display: none;
     align-items: flex-start;
     justify-content: center;
     padding: 6vh 5% 6vh;
@@ -441,9 +453,18 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
+    will-change: opacity;
+  }
+
+  /* Added only once the open transition finishes, removed the instant close starts —
+     so the blur is a one-time snap-in/out on a static frame, never animated. */
+  .modal-overlay.blurred {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   .modal-overlay.open {
+    display: flex;
     opacity: 1;
     pointer-events: auto;
   }
@@ -456,9 +477,10 @@
     width: 100%;
     padding: 60px;
     position: relative;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.18);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.16);
     transform: translateY(24px);
     transition: transform 0.35s ease;
+    will-change: transform;
   }
 
   .modal-overlay.open .modal-panel {
@@ -603,17 +625,19 @@
 
   /* ---- CPU project: inline live datapath diagram ---- */
   .cpu-viz { width: 100%; }
-  .cpu-viz.thumb { height: 100%; display: flex; align-items: center; justify-content: center; padding: 10%; background: #fff; }
+  .cpu-viz:not(.thumb) { padding: 30px 34px 26px; }
+  .cpu-viz.thumb { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10%; background: #fff; }
   .cpu-viz svg { display: block; width: 100%; height: auto; }
-  .cpu-viz .node rect { fill: #fff; stroke: var(--line); stroke-width: 1.2; transition: stroke .3s, filter .3s; }
+  .cpu-viz .node rect { fill: #fff; stroke: var(--line); stroke-width: 1.2; transition: stroke .3s, stroke-width .3s; }
   .cpu-viz.thumb .node rect { fill: #f3f2ec; }
   .cpu-viz .node text { font-family: 'Inter', sans-serif; fill: var(--text); }
   .cpu-viz .node .lbl { font-size: 9px; letter-spacing: .05em; fill: var(--muted); text-transform: uppercase; }
   .cpu-viz .node .val { font-size: 13px; font-weight: 500; }
-  .cpu-viz .node.active rect { stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 3px 10px rgba(58,92,218,.25)); }
+  .cpu-viz .node.active rect { stroke: var(--accent); stroke-width: 2; }
   .cpu-viz .wire { stroke: var(--line); stroke-width: 1.4; fill: none; }
   .cpu-viz .pulse { fill: var(--accent); opacity: 0; }
-  .cpu-viz .caption { text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; min-height: 28px; margin: 16px 0 18px; }
+  .cpu-viz .purpose { text-align: center; font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .cpu-viz .caption { text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; min-height: 28px; margin: 0 0 14px; }
   .cpu-viz .regs { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
   .cpu-viz .reg { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 8px 16px; text-align: center; transition: border-color .3s, box-shadow .3s; }
   .cpu-viz .reg.hot { border-color: var(--accent); box-shadow: 0 3px 10px rgba(58,92,218,.18); }
@@ -625,7 +649,17 @@
     background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 6px 14px;
     border-radius: 20px; cursor: pointer; transition: .2s;
   }
-  .cpu-viz .controls button:hover, .cpu-viz .controls button.on { color: var(--text); border-color: var(--text); }
+  .cpu-viz .wire.loop { stroke-dasharray: 3 4; }
+  .cpu-viz .isa-line {
+    text-align: center; font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: .04em;
+    color: var(--muted); margin-top: 10px;
+  }
+  .cpu-viz .isa-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 18px 0 4px; }
+  .cpu-viz .isa-tag {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: .04em; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 20px; padding: 5px 12px; transition: .25s;
+  }
+  .cpu-viz .isa-tag.active { color: #fff; background: var(--accent); border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -634,9 +668,9 @@
   <!-- FIXED BACKGROUND LAYER -->
   <div class="base-bg"></div>
   <div class="bg-blobs">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
+    <div class="blob blob-1"><div class="blob-color"></div><div class="blob-color"></div></div>
+    <div class="blob blob-2"><div class="blob-color"></div><div class="blob-color"></div></div>
+    <div class="blob blob-3"><div class="blob-color"></div><div class="blob-color"></div></div>
   </div>
 
   <!-- HERO -->
@@ -816,6 +850,29 @@
     const blob2 = document.querySelector('.blob-2');
     const blob3 = document.querySelector('.blob-3');
 
+    // Crossfades between a blob's two .blob-color layers via opacity (compositor-only)
+    // instead of transitioning background-color (which repaints the whole layer).
+    function radial(color) { return `radial-gradient(closest-side, ${color} 0%, transparent 100%)`; }
+    function makeBlobColorSetter(blobEl, initialColor) {
+      const layers = blobEl.querySelectorAll('.blob-color');
+      layers[0].style.background = radial(initialColor);
+      layers[0].classList.add('front');
+      let frontIndex = 0;
+      return function setColor(color) {
+        const backIndex = 1 - frontIndex;
+        const back = layers[backIndex];
+        back.style.background = radial(color);
+        requestAnimationFrame(() => {
+          layers[frontIndex].classList.remove('front');
+          back.classList.add('front');
+          frontIndex = backIndex;
+        });
+      };
+    }
+    const setBlob1Color = makeBlobColorSetter(blob1, '#c0c5ea');
+    const setBlob2Color = makeBlobColorSetter(blob2, '#e6c3c3');
+    const setBlob3Color = makeBlobColorSetter(blob3, '#c4d4c5');
+
     function raf(time) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -843,9 +900,9 @@
         if (entry.isIntersecting) {
           const id = entry.target.id;
           if (colorSets[id]) {
-            blob1.style.backgroundColor = colorSets[id][0];
-            blob2.style.backgroundColor = colorSets[id][1];
-            blob3.style.backgroundColor = colorSets[id][2];
+            setBlob1Color(colorSets[id][0]);
+            setBlob2Color(colorSets[id][1]);
+            setBlob3Color(colorSets[id][2]);
           }
         }
       });
@@ -863,30 +920,34 @@
 
     function cpuVizMarkup(compact) {
       const cls = compact ? 'cpu-viz thumb' : 'cpu-viz';
+      const legend = compact
+        ? `<div class="isa-line">ADD &middot; SUB &middot; AND &middot; OR &middot; LOAD &middot; STORE &middot; BEQ &middot; JUMP</div>`
+        : `<div class="isa-row" data-isa>${CPU_OPN.map(op => `<span class="isa-tag" data-op="${op}">${op}</span>`).join('')}</div>`;
       return `<div class="${cls}">
-        <svg viewBox="0 0 720 190">
-          <path class="wire" d="M95,95 H185"/>
-          <path class="wire" d="M275,95 H365"/>
-          <path class="wire" d="M455,70 Q500,70 500,95 Q500,120 545,120"/>
-          <path class="wire" d="M455,120 H545"/>
-          <path class="wire" d="M635,95 Q670,95 670,60 Q670,20 500,20 Q330,20 275,20 Q95,20 95,70"/>
+        ${compact ? '' : `<div class="purpose">Simulating a single-cycle 8-bit CPU as it runs a 5-instruction program computing 5&nbsp;+&nbsp;7</div>`}
+        ${compact ? '' : `<div class="caption" data-caption>&mdash;</div>`}
+        <svg viewBox="0 0 720 200">
+          <path class="wire" d="M195,120 H245"/>
+          <path class="wire" d="M335,120 H385"/>
+          <path class="wire" d="M475,120 H525"/>
+          <path class="wire loop" d="M570,90 C570,25 150,25 150,90"/>
           <circle class="pulse" data-p="1" r="4"/><circle class="pulse" data-p="2" r="4"/>
           <circle class="pulse" data-p="3" r="4"/><circle class="pulse" data-p="4" r="4"/>
-          <g class="node" data-n="imem" transform="translate(5,65)"><rect width="90" height="60" rx="6"/>
+          <g class="node" data-n="imem" transform="translate(105,90)"><rect width="90" height="60" rx="6"/>
             <text class="lbl" x="45" y="20" text-anchor="middle">fetch</text>
             <text class="val" data-v="imem" x="45" y="42" text-anchor="middle">--</text></g>
-          <g class="node" data-n="rf" transform="translate(185,65)"><rect width="90" height="60" rx="6"/>
+          <g class="node" data-n="rf" transform="translate(245,90)"><rect width="90" height="60" rx="6"/>
             <text class="lbl" x="45" y="20" text-anchor="middle">registers</text>
             <text class="val" data-v="rf" x="45" y="42" text-anchor="middle">--</text></g>
-          <g class="node" data-n="alu" transform="translate(365,40)"><rect width="90" height="60" rx="6"/>
+          <g class="node" data-n="alu" transform="translate(385,90)"><rect width="90" height="60" rx="6"/>
             <text class="lbl" x="45" y="20" text-anchor="middle">alu</text>
             <text class="val" data-v="alu" x="45" y="42" text-anchor="middle">--</text></g>
-          <g class="node" data-n="dmem" transform="translate(545,90)"><rect width="90" height="60" rx="6"/>
+          <g class="node" data-n="dmem" transform="translate(525,90)"><rect width="90" height="60" rx="6"/>
             <text class="lbl" x="45" y="20" text-anchor="middle">memory</text>
             <text class="val" data-v="dmem" x="45" y="42" text-anchor="middle">--</text></g>
         </svg>
+        ${legend}
         ${compact ? '' : `
-        <div class="caption" data-caption>—</div>
         <div class="regs" data-regs></div>
         <div class="controls">
           <button data-toggle class="on">Pause</button>
@@ -924,16 +985,27 @@
       const pulses = {};
       [1,2,3,4].forEach(n => pulses[n] = el.querySelector(`.pulse[data-p="${n}"]`));
       const capEl = el.querySelector('[data-caption]');
+      const isaTags = {};
+      el.querySelectorAll('.isa-tag').forEach(t => isaTags[t.dataset.op] = t);
 
       const regsEl = el.querySelector('[data-regs]');
+      let regCells = null; // cached .rv elements, built once, updated in place after that
       function renderRegs() {
         if (!regsEl) return;
-        regsEl.innerHTML = regs.map((v,i) => `<div class="reg" data-reg="${i}"><div class="rn">r${i}</div><div class="rv">${v}</div></div>`).join('');
+        if (!regCells) {
+          // Build the register cells once — rebuilding this innerHTML every ~1.4s (as the
+          // old code did) forces a reflow of the whole row on every animation step, which
+          // is what made the step animation stutter. From here on we just update text.
+          regsEl.innerHTML = regs.map((v,i) => `<div class="reg" data-reg="${i}"><div class="rn">r${i}</div><div class="rv">${v}</div></div>`).join('');
+          regCells = regs.map((_, i) => regsEl.querySelector(`[data-reg="${i}"] .rv`));
+        } else {
+          regs.forEach((v, i) => { if (regCells[i]) regCells[i].textContent = v; });
+        }
       }
-      function pulse(n, x1,y1,x2,y2,dur) {
+      function pulse(n, points, dur) {
         const dot = pulses[n];
         dot.style.opacity = 1;
-        dot.animate([{transform:`translate(${x1}px,${y1}px)`},{transform:`translate(${x2}px,${y2}px)`}], {duration:dur, easing:'ease-in-out'});
+        dot.animate(points.map(([x,y]) => ({transform:`translate(${x}px,${y}px)`})), {duration:dur, easing:'ease-in-out'});
         setTimeout(() => dot.style.opacity = 0, dur);
       }
       function step() {
@@ -954,6 +1026,11 @@
         setv('alu', d.rtype ? alu : '\u2014');
         setv('dmem', (d.mem_read||d.mem_write) ? `[${d.addr}]` : '\u2014');
         if (capEl) capEl.textContent = cpuCaption(d);
+        if (Object.keys(isaTags).length) {
+          Object.values(isaTags).forEach(t => t.classList.remove('active'));
+          const tag = isaTags[CPU_OPN[d.opcode]];
+          if (tag) tag.classList.add('active');
+        }
 
         nodes.imem.classList.add('active');
         nodes.rf.classList.add('active');
@@ -961,10 +1038,10 @@
         nodes.dmem.classList.toggle('active', d.mem_read||d.mem_write);
         setTimeout(() => { nodes.imem.classList.remove('active'); nodes.rf.classList.remove('active'); nodes.alu.classList.remove('active'); nodes.dmem.classList.remove('active'); }, 900);
 
-        pulse(1,5,95,185,95,500);
-        if (d.rtype) pulse(2,275,95,365,70,500);
-        if (d.mem_read||d.mem_write) pulse(3,455,95,545,120,500);
-        if (d.reg_write) pulse(4,635,95,95,95,700);
+        pulse(1, [[195,120],[245,120]], 450);
+        if (d.rtype) pulse(2, [[335,120],[385,120]], 450);
+        if (d.mem_read||d.mem_write) pulse(3, [[475,120],[525,120]], 450);
+        if (d.reg_write) pulse(4, [[570,90],[440,35],[280,35],[150,90]], 700);
 
         renderRegs();
         if (d.reg_write && regsEl) {
@@ -990,8 +1067,11 @@
         renderRegs();
         if (playing) loop();
       });
-      loop();
-      return { stop, start: () => { if (!timer) { playing = true; if (toggleBtn) { toggleBtn.textContent = 'Pause'; toggleBtn.classList.add('on'); } loop(); } } };
+      // Defer the first step to the next animation frame rather than running it
+      // synchronously here — this DOM write (regs, active-node classes) would otherwise
+      // land in the same tick as the modal's opening transition and cause a dropped frame.
+      requestAnimationFrame(loop);
+      return { stop, start: () => { if (!timer) { playing = true; if (toggleBtn) { toggleBtn.textContent = 'Pause'; toggleBtn.classList.add('on'); } requestAnimationFrame(loop); } } };
     }
 
     // Auto-mount the small always-on preview in the project card, paused while any modal is open
@@ -1160,17 +1240,40 @@
         modalBody.appendChild(ul);
       }
 
-      modalOverlay.classList.add('open');
+      modalOverlay.style.display = 'flex';
+      modalOverlay.classList.remove('blurred');
       document.body.classList.add('modal-open');
       lenis.stop();
+      // Two animation frames instead of a synchronous forced reflow (`offsetWidth` read):
+      // the first lets the browser paint the closed (opacity:0) state after the heavy
+      // DOM update above, the second kicks off the opacity/transform transition cleanly
+      // on its own frame. Avoids blocking the main thread right as the modal opens.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          modalOverlay.classList.add('open');
+          // Snap the backdrop blur in only once the fade has finished, on a static frame —
+          // applying it during the opacity transition is what made opening feel heavy.
+          setTimeout(() => {
+            if (modalOverlay.classList.contains('open')) modalOverlay.classList.add('blurred');
+          }, 300);
+        });
+      });
     }
 
     function closeProjectModal() {
+      // Drop the blur first, before the fade-out transition starts, for the same reason:
+      // never animate opacity while backdrop-filter is active.
+      modalOverlay.classList.remove('blurred');
       modalOverlay.classList.remove('open');
       document.body.classList.remove('modal-open');
       stopCpuViz();
       if (cpuThumbCtl) cpuThumbCtl.start();
       lenis.start();
+      // Wait for the fade-out transition to finish, then fully remove the overlay
+      // from the render tree instead of leaving it at opacity:0.
+      setTimeout(() => {
+        if (!modalOverlay.classList.contains('open')) modalOverlay.style.display = 'none';
+      }, 300);
     }
 
     document.querySelectorAll('.project-row[data-project]').forEach(row => {
