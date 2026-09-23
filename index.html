@@ -100,9 +100,10 @@
   
   .top-bar .status {
     text-align: center;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     letter-spacing: 0.05em;
+    white-space: nowrap;
   }
   
   .top-bar .status a {
@@ -113,7 +114,7 @@
   
   .top-bar .copyright {
     text-align: right;
-    font-size: 16px;
+    font-size: 17px;
     color: var(--muted);
   }
   
@@ -145,7 +146,7 @@
     right: 5%;
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -410,13 +411,14 @@
   }
   
   .footer-info {
-    font-size: 14px;
-    color: var(--muted);
+    font-size: 16px;
+    color: var(--text);
     margin-bottom: 100px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    font-weight: 300;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
   }
   
   .giant-name {
@@ -813,10 +815,8 @@
     
     <div class="footer-info">
       <div>San Diego, CA ➔ Ithaca, NY</div>
-      <div>Interests: Tottenham Hotspur, Keshi, Badminton</div>
+      <div>Interests: Badminton, Tottenham Hotspur, Keshi</div>
     </div>
-    
-    <div class="giant-name serif italic">Raymond Sheng</div>
     
     <div class="sub-footer">
       <span>© 2026 — Designed & Built by Raymond Sheng</span>
@@ -1106,56 +1106,56 @@
 
     // ---- Project Detail Modal ----
     const projectDetails = {
-      epo: {
-        num: '01',
-        title: 'Emergency Power Off Board',
-        meta: ['2026', 'Hardware', 'KiCAD', 'SPICE'],
-        images: [
-          { view: 'pcb', src: 'images/epo_pcb.png', alt: 'Emergency Power Off Board, 3D render' },
-          { view: 'schematic', src: 'images/epo_sch.svg', alt: 'Emergency Power Off Board schematic' }
-        ],
-        overview: [
-          "The Emergency Power Off (EPO) board is the safety backbone of Cornell Hyperloop's pod electrical system — a relay-based cutoff circuit responsible for cleanly de-energizing every high-power subsystem the moment a fault or manual stop is triggered.",
-          "Because a failure here means an uncontrolled shutdown mid-run, the design went through extensive SPICE simulation before a single board was fabricated, covering nominal cutoff timing, relay bounce, and worst-case fault injection scenarios."
-        ],
-        highlights: [
-          'Fail-safe relay topology that de-energizes on loss of control signal, not just on command',
-          'SPICE-validated switching behavior across nominal and fault conditions'
-        ]
-      },
-      cpu: {
-        num: '02',
-        title: '8-bit CPU in Verilog',
-        meta: ['2026', 'Digital Design', 'Verilog', 'Icarus Verilog'],
-        images: [],
-        liveViz: true,
-        overview: [
-          "A single-cycle 8-bit CPU designed and built from scratch in Verilog to learn CPU architecture hands-on, with every module verified in simulation. The ISA packs a 3-bit opcode, 4 registers, and an 8-word instruction/data memory into an 8-bit instruction word, using a 2-operand form (rd = rd op rs) so everything fits — ADD/SUB/AND/OR opcodes even double directly as the ALU's function-select bits.",
-          "Built up module by module — register file, ALU, instruction/data memory, control unit, then the full CPU datapath — each verified in Icarus Verilog before moving to the next, culminating in an integration testbench that runs a 5-instruction program computing 5 + 7 = 12. A companion interactive HTML workbook mirrors the build order with hinted exercises, two auto-graded challenges, and a JavaScript reference simulator for testing programs without a local toolchain."
-        ],
-        highlights: [
-          'Full single-cycle datapath (reg file, ALU, control unit, instruction/data memory) verified end-to-end in Icarus Verilog',
-          'Companion HTML workbook with auto-graded exercises and a JS reference simulator for testing programs without a toolchain'
-        ]
-      },
-      buck: {
-        num: '03',
-        title: 'Buck Converter & LDO',
-        meta: ['2025', 'Power Electronics', 'Altium'],
-        images: [
-          { view: 'pcb', src: 'images/buck_pcb.png', alt: 'Buck Converter & LDO Board layout' },
-          { view: 'schematic', src: 'images/buck_sch.svg', alt: 'Buck Converter & LDO schematic' }
-        ],
-        overview: [
-          "A power regulation characterization board built to compare an asynchronous buck converter against a linear (LDO) regulator stage under identical load conditions, with each stage independently testable.",
-          "The layout isolates the switching and linear stages so each can be probed and characterized on its own — efficiency, ripple, transient response — without one stage's behavior bleeding into the other's measurements."
-        ],
-        highlights: [
-          'Separately testable async buck and LDO stages on a single characterization board',
-          'Designed in Altium with attention to switching-stage layout and thermal relief'
-        ]
-      }
-    };
+    epo: {
+      num: '01',
+      title: 'Emergency Power Off Board',
+      meta: ['2026', 'Hardware', 'KiCAD', 'SPICE'],
+      images: [
+        { view: 'pcb', src: 'images/epo_pcb.png', alt: 'Emergency Power Off Board, 3D render' },
+        { view: 'schematic', src: 'images/epo_sch.svg', alt: 'Emergency Power Off Board schematic' }
+      ],
+      overview: [
+        "The Emergency Power Off (EPO) board shuts down Cornell Hyperloop's high-power electrical subsystems when a fault is detected or a manual stop is triggered. It uses a relay-based cutoff circuit that also removes power if the control signal is lost.",
+        "Because the pod depends on this board to shut down safely, the circuit was extensively simulated in SPICE before fabrication. Simulations covered cutoff timing during normal operation, relay contact bounce, and worst-case fault scenarios."
+      ],
+      highlights: [
+        'Fail-safe relay circuit that removes power when the control signal is lost',
+        'Switching behavior verified in SPICE under normal operating conditions and simulated faults'
+      ]
+    },
+    cpu: {
+      num: '02',
+      title: '8-bit CPU in Verilog',
+      meta: ['2026', 'Digital Design', 'Verilog', 'Icarus Verilog'],
+      images: [],
+      liveViz: true,
+      overview: [
+        "I built a single-cycle 8-bit CPU from scratch in Verilog to learn how a processor's components work together. The architecture uses four registers and an eight-word instruction/data memory. Each 8-bit instruction contains a 3-bit opcode and uses a two-operand format (rd = rd op rs), where the destination register also supplies one of the inputs. The ADD, SUB, AND, and OR opcodes directly select the corresponding ALU operation.",
+        "I built and tested each module in Icarus Verilog before connecting the full datapath, starting with the register file and working through the ALU, instruction/data memory, and control unit. An integration testbench then verified the CPU by running a five-instruction program that computes 5 + 7 = 12. A companion interactive HTML workbook follows the same build sequence, with hints, two automatically graded challenges, and a JavaScript reference simulator for testing programs without installing a local toolchain."
+      ],
+      highlights: [
+        'Complete single-cycle datapath, with each module tested individually and the full CPU verified in Icarus Verilog',
+        'Interactive HTML workbook with guided exercises, two automatically graded challenges, and a browser-based reference simulator'
+      ]
+    },
+    buck: {
+      num: '03',
+      title: 'Buck Converter & LDO',
+      meta: ['2025', 'Power Electronics', 'Altium'],
+      images: [
+        { view: 'pcb', src: 'images/buck_pcb.png', alt: 'Buck Converter & LDO Board layout' },
+        { view: 'schematic', src: 'images/buck_sch.svg', alt: 'Buck Converter & LDO schematic' }
+      ],
+      overview: [
+        "This board was designed to compare an asynchronous buck converter with a low-dropout (LDO) linear regulator under the same load conditions. Both stages are on one board, with each set up for independent testing.",
+        "The layout separates the switching and linear stages to reduce interference between their measurements. This allows each stage's efficiency, output ripple, and response to load changes to be measured independently."
+      ],
+      highlights: [
+        'Asynchronous buck converter and LDO regulator on one board, with each stage independently testable',
+        'Designed in Altium with attention to switching-stage layout and thermal relief'
+      ]
+    }
+  };
 
     const modalOverlay = document.getElementById('project-modal');
     const modalClose = document.getElementById('modal-close');
