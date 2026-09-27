@@ -735,6 +735,37 @@
     <div class="section-label">Projects</div>
 
     <!-- Project 01 -->
+    <div class="project-row" data-project="cpu" tabindex="0" role="button" aria-label="View 8-bit CPU in Verilog details">
+      <div class="proj-img" id="cpu-thumb"></div>
+      <div class="proj-info">
+        <span class="proj-num mono">01</span>
+        <h3 class="serif italic">8-bit CPU in Verilog</h3>
+        <p>Single-cycle 8-bit CPU built from scratch in Verilog with a custom ISA and full datapath, verified end-to-end in simulation.</p>
+        <div class="proj-meta mono">2026 <span>/</span> Digital Design <span>/</span> Verilog</div>
+        <div class="proj-view-link mono">View Project <span>↗</span></div>
+      </div>
+    </div>
+
+    <!-- Project 02 -->
+    <div class="project-row" data-project="btspeak" tabindex="0" role="button" aria-label="View Bluetooth Speaker Amplifier Board details">
+      <div class="proj-img">
+        <img data-view="pcb" class="active" src="images/btspeak_pcb.png" alt="Bluetooth Speaker Amplifier Board, 3D render">
+        <img data-view="schematic" src="images/btspeak_sch.svg" alt="Bluetooth Speaker Amplifier Board schematic">
+        <div class="img-toggle">
+          <button data-view="pcb" class="active">PCB</button>
+          <button data-view="schematic">Schematic</button>
+        </div>
+      </div>
+      <div class="proj-info">
+        <span class="proj-num mono">02</span>
+        <h3 class="serif italic">Bluetooth Speaker Amplifier Board</h3>
+        <p>Wireless audio board pairing a Bluetooth receiver module with a class-D amplifier to drive a speaker directly from USB-C power.</p>
+        <div class="proj-meta mono">2026 <span>/</span> Audio Electronics <span>/</span> KiCAD</div>
+        <div class="proj-view-link mono">View Project <span>↗</span></div>
+      </div>
+    </div>
+
+    <!-- Project 03 -->
     <div class="project-row" data-project="epo" tabindex="0" role="button" aria-label="View Emergency Power Off Board details">
       <div class="proj-img">
         <img data-view="pcb" class="active" src="images/epo_pcb.png" alt="Emergency Power Off Board, 3D render">
@@ -745,7 +776,7 @@
         </div>
       </div>
       <div class="proj-info">
-        <span class="proj-num mono">01</span>
+        <span class="proj-num mono">03</span>
         <h3 class="serif italic">Emergency Power Off Board</h3>
         <p>Safety-critical relay cutoff PCB designed and validated in SPICE to cleanly de-energize Cornell Hyperloop's pod.</p>
         <div class="proj-meta mono">2026 <span>/</span> Hardware <span>/</span> KiCAD <span>/</span> SPICE</div>
@@ -753,19 +784,7 @@
       </div>
     </div>
 
-    <!-- Project 02 -->
-    <div class="project-row" data-project="cpu" tabindex="0" role="button" aria-label="View 8-bit CPU in Verilog details">
-      <div class="proj-img" id="cpu-thumb"></div>
-      <div class="proj-info">
-        <span class="proj-num mono">02</span>
-        <h3 class="serif italic">8-bit CPU in Verilog</h3>
-        <p>Single-cycle 8-bit CPU built from scratch in Verilog with a custom ISA and full datapath, verified end-to-end in simulation.</p>
-        <div class="proj-meta mono">2026 <span>/</span> Digital Design <span>/</span> Verilog</div>
-        <div class="proj-view-link mono">View Project <span>↗</span></div>
-      </div>
-    </div>
-
-    <!-- Project 03 -->
+    <!-- Project 04 -->
     <div class="project-row" data-project="buck" tabindex="0" role="button" aria-label="View Buck Converter and LDO details">
       <div class="proj-img">
         <img data-view="pcb" class="active" src="images/buck_pcb.png" alt="Buck Converter & LDO Board layout">
@@ -776,7 +795,7 @@
         </div>
       </div>
       <div class="proj-info">
-        <span class="proj-num mono">03</span>
+        <span class="proj-num mono">04</span>
         <h3 class="serif italic">Buck Converter & LDO</h3>
         <p>Power regulation characterization board featuring separately testable async buck and linear stages.</p>
         <div class="proj-meta mono">2025 <span>/</span> Power Electronics <span>/</span> Altium</div>
@@ -1162,8 +1181,40 @@
 
     // ---- Project Detail Modal ----
     const projectDetails = {
-    epo: {
+    cpu: {
       num: '01',
+      title: '8-bit CPU in Verilog',
+      meta: ['2026', 'Digital Design', 'Verilog', 'Icarus Verilog'],
+      images: [],
+      liveViz: true,
+      overview: [
+        "I built a single-cycle 8-bit CPU from scratch in Verilog to learn how a processor's components work together. The architecture uses four registers and an eight-word instruction/data memory. Each 8-bit instruction contains a 3-bit opcode and uses a two-operand format (rd = rd op rs), where the destination register also supplies one of the inputs. The ADD, SUB, AND, and OR opcodes directly select the corresponding ALU operation.",
+        "I built and tested each module in Icarus Verilog before connecting the full datapath, starting with the register file and working through the ALU, instruction/data memory, and control unit. An integration testbench then verified the CPU by running a five-instruction program that computes 5 + 7 = 12. A companion interactive HTML workbook follows the same build sequence, with hints, two automatically graded challenges, and a JavaScript reference simulator for testing programs without installing a local toolchain."
+      ],
+      highlights: [
+        'Complete single-cycle datapath, with each module tested individually and the full CPU verified in Icarus Verilog',
+        'Interactive HTML workbook with guided exercises, two automatically graded challenges, and a browser-based reference simulator'
+      ]
+    },
+    btspeak: {
+      num: '02',
+      title: 'Bluetooth Speaker Amplifier Board',
+      meta: ['2026', 'Audio Electronics', 'KiCAD'],
+      images: [
+        { view: 'pcb', src: 'images/btspeak_pcb.png', alt: 'Bluetooth Speaker Amplifier Board, 3D render' },
+        { view: 'schematic', src: 'images/btspeak_sch.svg', alt: 'Bluetooth Speaker Amplifier Board schematic' }
+      ],
+      overview: [
+        "This board pairs an MH-M18 Bluetooth audio receiver module with a PAM8403 class-D amplifier to drive a speaker directly from a wireless source, with no separate DAC or preamp stage in between. Power comes in over USB-C, with a bulk electrolytic reservoir capacitor placed close to the amplifier to absorb current transients during loud, transient-heavy playback.",
+        "The audio path is kept short: the Bluetooth module's stereo line-out feeds straight into the PAM8403's differential inputs, with passive RC filtering at the amplifier's inputs and outputs to clean up switching noise. The Bluetooth module's MUTE and KEY lines are broken out to header pins for pairing and playback control, and a dedicated screw-terminal connector carries the amplified output to the speaker."
+      ],
+      highlights: [
+        'MH-M18 Bluetooth receiver feeding a PAM8403 class-D amplifier for a direct wireless-to-speaker signal path',
+        'USB-C power input with a bulk reservoir capacitor sized for the amplifier\u2019s output current transients'
+      ]
+    },
+    epo: {
+      num: '03',
       title: 'Emergency Power Off Board',
       meta: ['2026', 'Hardware', 'KiCAD', 'SPICE'],
       images: [
@@ -1179,23 +1230,8 @@
         'Switching behavior verified in SPICE under normal operating conditions and simulated faults'
       ]
     },
-    cpu: {
-      num: '02',
-      title: '8-bit CPU in Verilog',
-      meta: ['2026', 'Digital Design', 'Verilog', 'Icarus Verilog'],
-      images: [],
-      liveViz: true,
-      overview: [
-        "I built a single-cycle 8-bit CPU from scratch in Verilog to learn how a processor's components work together. The architecture uses four registers and an eight-word instruction/data memory. Each 8-bit instruction contains a 3-bit opcode and uses a two-operand format (rd = rd op rs), where the destination register also supplies one of the inputs. The ADD, SUB, AND, and OR opcodes directly select the corresponding ALU operation.",
-        "I built and tested each module in Icarus Verilog before connecting the full datapath, starting with the register file and working through the ALU, instruction/data memory, and control unit. An integration testbench then verified the CPU by running a five-instruction program that computes 5 + 7 = 12. A companion interactive HTML workbook follows the same build sequence, with hints, two automatically graded challenges, and a JavaScript reference simulator for testing programs without installing a local toolchain."
-      ],
-      highlights: [
-        'Complete single-cycle datapath, with each module tested individually and the full CPU verified in Icarus Verilog',
-        'Interactive HTML workbook with guided exercises, two automatically graded challenges, and a browser-based reference simulator'
-      ]
-    },
     buck: {
-      num: '03',
+      num: '04',
       title: 'Buck Converter & LDO',
       meta: ['2025', 'Power Electronics', 'Altium'],
       images: [
