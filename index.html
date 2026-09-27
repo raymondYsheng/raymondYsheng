@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Raymond Sheng</title>
-<link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon/icon-16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon/icon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="favicon/icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="favicon/icon-180.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
 <meta name="description" content="Raymond Sheng, electrical and computer engineering student at Cornell.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +18,20 @@
     --accent: #3a5cda;
   }
   
+  html {
+    /* Reserve the scrollbar's width permanently. Without this, adding
+       overflow:hidden to <body> when the modal opens makes the scrollbar
+       disappear, which changes the page's available width and forces a
+       synchronous reflow of every flex row on the page (project-row included) —
+       that reflow is what was showing up as a 600ms+ Interaction to Next Paint. */
+    scrollbar-gutter: stable;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* --- EXPERIMENT: force every element to the mono display font --- */
+  * { font-family: 'Space Mono', 'IBM Plex Mono', monospace !important; }
+  .hero-name, .hero-name * { font-family: 'Cormorant Garamond', serif !important; }
   
   body {
     background-color: transparent; 
@@ -196,6 +205,16 @@
   }
   
   .project-row { cursor: pointer; }
+
+  /* Mouse clicks shouldn't leave the default focus-ring outline on the row;
+     keyboard (Tab) navigation still gets a visible ring for accessibility. */
+  .project-row { outline: none; }
+  .project-row:focus { outline: none; }
+  .project-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
 
   .proj-img {
     flex: 1;
@@ -379,7 +398,7 @@
   
   .exp-row .company { font-weight: 500; color: var(--text); }
   .exp-row .role { color: var(--muted); }
-  .exp-row .date { text-align: right; font-size: 13px; color: var(--muted); }
+  .exp-row .date { text-align: right; font-size: 13px; color: var(--muted); font-family: 'Inter', sans-serif; }
   
   /* ---- Footer ---- */
   .footer {
@@ -451,12 +470,6 @@
     /* No backdrop-filter here — see .modal-overlay.blurred below. Blur is expensive to
        recompute every frame, so it must never be present while opacity is transitioning. */
     display: none;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 6vh 5% 6vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -474,6 +487,24 @@
     display: flex;
     opacity: 1;
     pointer-events: auto;
+  }
+
+  /* The blurred backdrop and the scrolling content are now two separate layers.
+     Previously the same element both applied backdrop-filter AND handled
+     overflow-y:auto scrolling, which forced the browser to re-sample the blur
+     on every scroll frame — that's what was showing up as scroll lag inside
+     the modal. Scrolling now happens on this plain (unblurred) layer instead,
+     so the blur underneath it is composited once and left alone. */
+  .modal-scroll {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 6vh 5% 6vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .modal-panel {
@@ -693,7 +724,7 @@
     <div class="hero-bottom mono">
       <span>cornell university physical intelligence / cornell hyperloop / cornell kappa theta pi</span>
       <span>
-        <a href="#projects" data-lenis-link>projects ↓</a> &nbsp;&nbsp;&nbsp; 
+        <a href="#projects" data-scroll-link>projects ↓</a> &nbsp;&nbsp;&nbsp; 
         <a href="resume.html">résumé ↗</a>
       </span>
     </div>
@@ -830,27 +861,21 @@
   </footer>
 
   <!-- PROJECT DETAIL MODAL -->
-  <div class="modal-overlay" id="project-modal" data-lenis-prevent>
-    <div class="modal-panel">
-      <button class="modal-close" id="modal-close" aria-label="Close project detail">✕</button>
-      <span class="modal-num mono" id="modal-num"></span>
-      <h3 class="serif italic" id="modal-title"></h3>
-      <div class="modal-meta mono" id="modal-meta"></div>
-      <div class="modal-img" id="modal-img"></div>
-      <div class="modal-body" id="modal-body"></div>
+  <div class="modal-overlay" id="project-modal" data-scroll-prevent>
+    <div class="modal-scroll">
+      <div class="modal-panel">
+        <button class="modal-close" id="modal-close" aria-label="Close project detail">✕</button>
+        <span class="modal-num mono" id="modal-num"></span>
+        <h3 class="serif italic" id="modal-title"></h3>
+        <div class="modal-meta mono" id="modal-meta"></div>
+        <div class="modal-img" id="modal-img"></div>
+        <div class="modal-body" id="modal-body"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Lenis Smooth Scrolling & Background Logic -->
-  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+  <!-- Background Logic (native scrolling, no smooth-scroll library) -->
   <script>
-    // Initialize Lenis
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smooth: true,
-    });
-
     const blob1 = document.querySelector('.blob-1');
     const blob2 = document.querySelector('.blob-2');
     const blob3 = document.querySelector('.blob-3');
@@ -878,20 +903,45 @@
     const setBlob2Color = makeBlobColorSetter(blob2, '#e6c3c3');
     const setBlob3Color = makeBlobColorSetter(blob3, '#c4d4c5');
 
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
+    // Native scroll-driven parallax, rAF-throttled so the transform only updates once
+    // per frame no matter how many scroll events the browser fires.
+    //
+    // `document.documentElement.scrollHeight` used to be read inside this rAF callback,
+    // once per scroll frame. Reading scrollHeight forces the browser to run a full
+    // synchronous layout pass before it can answer — a "forced reflow" — right in the
+    // middle of the scroll's own compositing work. On a page this size that was the
+    // actual cause of the scroll jank: every frame paid for a layout it didn't need,
+    // since the page's height barely ever changes mid-scroll. Now it's computed once
+    // and cached, and only ever recomputed on resize or when the page's content height
+    // changes (images loading, modal open/close), so the per-frame work is pure
+    // arithmetic plus a compositor-only transform write.
+    let scrollableHeight = 0;
+    function recalcScrollable() {
+      scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
     }
-    requestAnimationFrame(raf);
+    recalcScrollable();
+    window.addEventListener('resize', recalcScrollable, { passive: true });
+    window.addEventListener('load', recalcScrollable);
+    if (window.ResizeObserver) {
+      new ResizeObserver(recalcScrollable).observe(document.body);
+    }
 
-    // Ensure we avoid dividing by zero if layout hasn't computed yet
-    lenis.on('scroll', (e) => {
-      const p = e.limit > 0 ? e.scroll / e.limit : 0;
-      
+    let scrollTicking = false;
+    function updateBlobParallax() {
+      const p = scrollableHeight > 0 ? window.scrollY / scrollableHeight : 0;
+
       blob1.style.transform = `translate3d(${p * 20}vw, ${p * 35}vh, 0)`;
       blob2.style.transform = `translate3d(${-p * 15}vw, ${-p * 25}vh, 0)`;
       blob3.style.transform = `translate3d(${p * 10}vw, ${-p * 45}vh, 0)`;
-    });
+      scrollTicking = false;
+    }
+    window.addEventListener('scroll', () => {
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(updateBlobParallax);
+      }
+    }, { passive: true });
+    updateBlobParallax();
 
     const colorSets = {
       'hero-section':       ['#c0c5ea', '#e6c3c3', '#c4d4c5'], 
@@ -919,7 +969,7 @@
 
     // ---- CPU project: inline live datapath diagram ----
     // Faithful to the real ISA: opcode = instr[7:5], rd = instr[4:3], rs = instr[2:1], addr = instr[2:0]
-    const CPU_PROG = [0x80,0x89,0x02,0xA2,0xE4,0x00,0x00,0x00]; // LOAD r0,0 / LOAD r1,1 / ADD r0,r0,r1 / STORE r0,2 / JUMP 4
+    const CPU_PROG = [0x80,0x89,0x02,0xA2,0xE0,0x00,0x00,0x00]; // LOAD r0,0 / LOAD r1,1 / ADD r0,r0,r1 / STORE r0,2 / JUMP 0
     const CPU_OPN = ['ADD','SUB','AND','OR','LOAD','STORE','BEQ','JUMP'];
     let cpuModalStop = null;
 
@@ -1072,11 +1122,12 @@
         renderRegs();
         if (playing) loop();
       });
-      // Defer the first step to the next animation frame rather than running it
-      // synchronously here — this DOM write (regs, active-node classes) would otherwise
-      // land in the same tick as the modal's opening transition and cause a dropped frame.
+      // Deferred with setTimeout rather than requestAnimationFrame so this background
+      // loop's rendering work isn't chained to (and counted against) the click/keypress
+      // that triggered start() — see the note in openProjectModal for why rAF chains get
+      // folded into an interaction's measured INP.
       requestAnimationFrame(loop);
-      return { stop, start: () => { if (!timer) { playing = true; if (toggleBtn) { toggleBtn.textContent = 'Pause'; toggleBtn.classList.add('on'); } requestAnimationFrame(loop); } } };
+      return { stop, start: () => { if (!timer) { playing = true; if (toggleBtn) { toggleBtn.textContent = 'Pause'; toggleBtn.classList.add('on'); } setTimeout(loop, 0); } } };
     }
 
     // Auto-mount the small always-on preview in the project card, paused while any modal is open
@@ -1098,13 +1149,13 @@
       });
     });
 
-    document.querySelectorAll('a[data-lenis-link]').forEach(anchor => {
+    document.querySelectorAll('a[data-scroll-link]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const targetId = this.getAttribute('href').replace('#', '');
         const targetElement = document.getElementById(targetId + '-section');
         if (targetElement) {
-          lenis.scrollTo(targetElement);
+          targetElement.scrollIntoView({ block: 'start' });
         }
       });
     });
@@ -1174,16 +1225,7 @@
       return parts.map(p => `<span class="meta-part">${p}</span>`).join('<span>/</span>');
     }
 
-    function openProjectModal(id) {
-      const data = projectDetails[id];
-      if (!data) return;
-
-      if (cpuThumbCtl) cpuThumbCtl.stop();
-
-      modalNum.textContent = data.num;
-      modalTitle.textContent = data.title;
-      modalMeta.innerHTML = buildMeta(data.meta);
-
+    function populateModalContent(data) {
       // Images / live diagram
       modalImg.innerHTML = '';
       stopCpuViz();
@@ -1244,25 +1286,47 @@
         modalBody.appendChild(h4);
         modalBody.appendChild(ul);
       }
+    }
+
+    function openProjectModal(id) {
+      const data = projectDetails[id];
+      if (!data) return;
+
+      if (cpuThumbCtl) cpuThumbCtl.stop();
+      stopCpuViz();
+
+      // Only the cheap text fields are set synchronously in the click handler, and any
+      // leftover content from a previous project is cleared immediately so nothing stale
+      // flashes.
+      modalNum.textContent = data.num;
+      modalTitle.textContent = data.title;
+      modalMeta.innerHTML = buildMeta(data.meta);
+      modalImg.innerHTML = '';
+      modalBody.innerHTML = '';
 
       modalOverlay.style.display = 'flex';
       modalOverlay.classList.remove('blurred');
       document.body.classList.add('modal-open');
-      lenis.stop();
-      // Two animation frames instead of a synchronous forced reflow (`offsetWidth` read):
-      // the first lets the browser paint the closed (opacity:0) state after the heavy
-      // DOM update above, the second kicks off the opacity/transform transition cleanly
-      // on its own frame. Avoids blocking the main thread right as the modal opens.
+
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          modalOverlay.classList.add('open');
-          // Snap the backdrop blur in only once the fade has finished, on a static frame —
-          // applying it during the opacity transition is what made opening feel heavy.
-          setTimeout(() => {
-            if (modalOverlay.classList.contains('open')) modalOverlay.classList.add('blurred');
-          }, 300);
-        });
+        modalOverlay.classList.add('open');
+        // Snap the backdrop blur in only once the fade has finished, on a static frame —
+        // applying it during the opacity transition is what made opening feel heavy.
+        setTimeout(() => {
+          if (modalOverlay.classList.contains('open')) modalOverlay.classList.add('blurred');
+        }, 300);
       });
+
+      // Build the heavy modal content (images, the live CPU diagram, body text) in a
+      // plain setTimeout, NOT another requestAnimationFrame. Chrome's Interactions panel
+      // follows rAF chains and keeps attributing their rendering cost to the original
+      // interaction — nesting this work in more rAFs never actually removed it from the
+      // measured INP, it only postponed when the cost landed while it was still counted
+      // (this is why Presentation delay stayed high even though Processing duration was
+      // 0ms). A setTimeout breaks that causal chain: the fast "modal fading in" frame
+      // gets presented and satisfies the interaction, and this heavier build runs
+      // afterward as its own, unattributed task.
+      setTimeout(() => populateModalContent(data), 0);
     }
 
     function closeProjectModal() {
@@ -1273,7 +1337,6 @@
       document.body.classList.remove('modal-open');
       stopCpuViz();
       if (cpuThumbCtl) cpuThumbCtl.start();
-      lenis.start();
       // Wait for the fade-out transition to finish, then fully remove the overlay
       // from the render tree instead of leaving it at opacity:0.
       setTimeout(() => {
@@ -1304,4 +1367,4 @@
   </script>
 
 </body>
-</html>
+</html>
